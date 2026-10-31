@@ -223,18 +223,18 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </section>
 
   <section class="card">
-    <form id="entryForm" autocomplete="off">
+    <form id="entryForm" autocomplete="off" novalidate>
       <div class="seg" role="radiogroup" aria-label="種類">
         <input type="radio" name="type" id="tOut" value="out" checked><label for="tOut">使った</label>
         <input type="radio" name="type" id="tIn" value="in"><label for="tIn">入った</label>
       </div>
-      <label class="amount" for="amount"><span>¥</span><input id="amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" aria-label="金額"></label>
+      <label class="amount" for="amount"><span>¥</span><input id="amount" inputmode="numeric" placeholder="0" aria-label="金額"></label>
       <div class="chips" id="cats" role="radiogroup" aria-label="カテゴリ"></div>
       <div class="paywrap" id="payWrap">
         <span class="lbl">支払い方法</span>
         <div class="chips" id="pays" role="radiogroup" aria-label="支払い方法"></div>
         <div class="ptrow">
-          <label class="field" for="points"><span>うちポイントで払った分（あれば）</span><input id="points" inputmode="numeric" pattern="[0-9]*" placeholder="0"></label>
+          <label class="field" for="points"><span>うちポイントで払った分（あれば）</span><input id="points" inputmode="numeric" placeholder="0"></label>
           <span class="split" id="split" aria-live="polite"></span>
         </div>
       </div>
@@ -478,7 +478,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       var lo=ymd(new Date(o.getFullYear(),o.getMonth(),o.getDate()-5));
       if(state.entries.some(function(e){return !e.sample&&e.type==='in'&&e.cat===pd.cat&&e.date>=lo&&e.date<=tS}))return;
       var c=document.createElement('section');c.className='paycard';
-      c.innerHTML='<div class="pc-head"><span></span><span class="dt"></span></div><div class="pc-row"><span>¥</span><input inputmode="numeric" pattern="[0-9]*" placeholder="0"><button type="button">記録する</button></div><div class="pc-foot"><span>シフトボードの金額に直してから記録できます</span><button type="button">今回は記録しない</button></div>';
+      c.innerHTML='<div class="pc-head"><span></span><span class="dt"></span></div><div class="pc-row"><span>¥</span><input inputmode="numeric" placeholder="0"><button type="button">記録する</button></div><div class="pc-foot"><span>シフトボードの金額に直してから記録できます</span><button type="button">今回は記録しない</button></div>';
       var head=c.querySelector('.pc-head span'),b=document.createElement('b');b.textContent=pd.cat;
       head.appendChild(oS===tS?document.createTextNode('今日は '):document.createTextNode(''));head.appendChild(b);
       head.appendChild(document.createTextNode(oS===tS?' の給料日です':' の給料日でした'));
