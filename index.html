@@ -48,6 +48,13 @@ button{cursor:pointer}
 
 .sample{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .sample button{border:0;background:none;color:var(--accent);font-weight:700;padding:4px 0;white-space:nowrap}
+.sample .sbtns{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.sample.wrapit{flex-wrap:wrap}
+.bknudge{background:var(--warn-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.bknudge p{margin:0}
+.bknudge .nb{display:flex;flex-wrap:wrap;gap:8px}
+.bknudge button{border:1px solid var(--warn);background:none;color:var(--warn);border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px}
+.bknudge button.ghost{border-color:transparent;color:var(--muted);font-weight:500}
 
 .hero{background:var(--accent);color:var(--on-accent);border-radius:16px;padding:20px 20px 16px;display:flex;flex-direction:column;gap:4px}
 .hero.over{background:var(--warn)}
@@ -236,9 +243,20 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 <div class="wrap" id="pager">
 <div class="view" id="viewHome">
   <div class="paycards" id="payCards" hidden></div>
-  <div class="sample" id="sampleBar" hidden>
+  <section class="bknudge" id="bkNudge" hidden>
+    <p id="bkNudgeText"></p>
+    <div class="nb">
+      <button type="button" id="nCopy">テキストでコピー</button>
+      <button type="button" id="nSave">ファイルに保存</button>
+      <button type="button" id="nLater" class="ghost">あとで</button>
+    </div>
+  </section>
+  <div class="sample wrapit" id="sampleBar" hidden>
     <span>いま表示しているのはサンプルです</span>
-    <button type="button" id="clearSample">消して始める</button>
+    <div class="sbtns">
+      <button type="button" id="restoreBtn">バックアップから戻す</button>
+      <button type="button" id="clearSample">消して始める</button>
+    </div>
   </div>
 
   <section class="hero" id="hero" aria-live="polite">
@@ -505,7 +523,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   var state;
   try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
   if(!state||!Array.isArray(state.entries))state=sampleData();
-  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
+  else if(state.sample&&state.entries.some(function(e){return !e.sample})){state.entries=state.entries.filter(function(e){return !e.sample});state.sample=false;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat','bkSnooze'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
   if(!state.custom)state.custom={out:[],in:[]};
   if(!state.paydays)state.paydays=[];
   if(!state.payDone)state.payDone={};
@@ -762,7 +781,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     else{hero.classList.add('over');$('heroLead').textContent='今日は目安を超えています';$('heroBig').textContent=yen(-left)}
     var nx=p.end;
     $('heroSub').textContent=(perDay>0?'1日の目安 ¥'+yen(perDay):'残高が足りません')+'　次の入金 '+(nx.getMonth()+1)+'/'+nx.getDate()+'（あと'+daysLeft+'日）';
-    $('balance').textContent='¥'+yen(balNow);
+    $('balance').textContent=sgnYen(balNow);
     $('spent').textContent='¥'+yen(spentPeriod);
     $('ptsUsed').textContent=yen(ptsPeriod)+'P';
 
@@ -1075,7 +1094,25 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   $('bankClearSample').addEventListener('click',function(){dropSampleAcc();save();renderBank();toast('口座のサンプルを消しました')});
 
   function hasReal(){return state.entries.some(function(e){return !e.sample})}
+  function renderNudge(){
+    var box=$('bkNudge');if(!box)return;
+    var real=state.entries.filter(function(e){return !e.sample}).length+state.bank.filter(function(x){return !x.sample}).length, t=today0(), msg='';
+    var snoozed=state.bkSnooze&&(t-parse(state.bkSnooze))/DAY<3;
+    if(real&&!snoozed){
+      if(!state.lastBackup){if(real>=3)msg='まだバックアップしていません。ホーム画面のアイコンを削除したり、ホーム画面に追加し直したりすると記録が消えるので、保存しておきましょう。'}
+      else{var days=Math.round((t-parse(state.lastBackup))/DAY);if(days>=7)msg='最後のバックアップから'+days+'日たちました。新しい記録も保存しておきましょう。'}
+    }
+    box.hidden=!msg;$('bkNudgeText').textContent=msg;
+  }
+  $('nCopy').addEventListener('click',function(){$('setDetails').open=true;$('bkCopy').click();renderNudge()});
+  $('nSave').addEventListener('click',function(){$('setDetails').open=true;$('bkSave').click();renderNudge()});
+  $('nLater').addEventListener('click',function(){state.bkSnooze=ymd(today0());save();renderNudge()});
+  $('restoreBtn').addEventListener('click',function(){
+    $('setDetails').open=true;$('bkPasteBox').hidden=false;
+    try{$('bkNote').scrollIntoView({behavior:'smooth',block:'start'})}catch(e){$('bkNote').scrollIntoView()}
+  });
   function renderBackupNote(){
+    renderNudge();
     var el=$('bkNote');if(!el)return;
     if(state.lastBackup){var d=parse(state.lastBackup);el.className='bk-note';el.textContent='最後のバックアップ：'+d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+'。ホーム画面のアイコンを削除したり機種変更したりする前にも保存しておくと安心です。'}
     else{el.className='bk-note'+(hasReal()?' warn':'');el.textContent='まだバックアップしていません。ホーム画面のアイコンを削除したり機種変更したりすると記録が消えるので、ときどき保存しておいてください。別の端末やブラウザの記録を移すときにも使えます。'}
@@ -1086,7 +1123,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     d.accounts=(d.accounts||[]).filter(function(a){return !a.sample});d.bank=(d.bank||[]).filter(function(x){return !x.sample});
     return JSON.stringify({app:'PayNote',v:1,at:new Date().toISOString(),data:d});
   }
-  function markBackup(msg){state.lastBackup=ymd(today0());save();renderBackupNote();toast(msg)}
+  function markBackup(msg){state.lastBackup=ymd(today0());delete state.bkSnooze;save();renderBackupNote();toast(msg)}
   $('bkSave').addEventListener('click',function(){
     var name='paynote-backup-'+ymd(today0())+'.json', text=exportText(), blob=new Blob([text],{type:'application/json'});
     function download(){
