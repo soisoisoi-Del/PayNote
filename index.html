@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -37,7 +37,10 @@
   --out:#ec8069; --in:#5cc7a6; --warn:#ec8069; --warn-soft:#3a221c; --pt:#e3b04f; --pt-soft:#3b3020; color-scheme:dark}
 
 *{box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,.wrap,.view{touch-action:pan-x pan-y}
+button,label,select,.brow{touch-action:manipulation}
+.field input,.field select,.addform input,.blink select,.pc-acc select,.bkbox textarea{font-size:16px}
 html,body{height:100%;overflow:hidden}
 .wrap{--tabh:60px;height:calc(100% - var(--tabh));display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
 .wrap::-webkit-scrollbar{display:none}
@@ -462,6 +465,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 
 <script>
 (function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});
+  document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
   var KEY='atonanen-v1', DAY=86400000;
   var CATS={out:['食費','学食','交通','教材・本','日用品','遊び・趣味','服・美容','通信','その他'],in:['仕送り','バイト代','奨学金','その他']};
   var PAYS=['現金','クレカ','交通系IC','QR決済','デビット','口座引落','振込・送金'];
