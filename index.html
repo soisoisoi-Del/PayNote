@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -42,7 +42,7 @@ html,body,.wrap,.view{touch-action:pan-x pan-y}
 button,label,select,.brow{touch-action:manipulation}
 .field input,.field select,.addform input,.blink select,.pc-acc select,.bkbox textarea{font-size:16px}
 html,body{height:100%;overflow:hidden}
-.wrap{--tabh:60px;height:calc(100% - var(--tabh));display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.wrap{--tabh:60px;position:fixed;left:0;right:0;top:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
 .wrap::-webkit-scrollbar{display:none}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -208,7 +208,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;transform:translateX(-50%);background:var(--ink);color:var(--sheet);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
-.view{flex:0 0 100%;min-width:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;gap:20px;padding-block:16px 28px;padding-left:max(16px,env(safe-area-inset-left,0px),calc((100% - 448px) / 2));padding-right:max(16px,env(safe-area-inset-right,0px),calc((100% - 448px) / 2))}
+.view{flex:0 0 100%;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;gap:20px;padding-block:calc(16px + env(safe-area-inset-top,0px)) 28px;padding-left:max(16px,env(safe-area-inset-left,0px),calc((100% - 448px) / 2));padding-right:max(16px,env(safe-area-inset-right,0px),calc((100% - 448px) / 2))}
 .view>*{flex:none}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--sheet);border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .tabbar .in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);position:relative}
@@ -246,6 +246,9 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 <div class="wrap" id="pager">
 <div class="view" id="viewHome">
   <div class="paycards" id="payCards" hidden></div>
+  <section class="bknudge" id="browserWarn" hidden>
+    <p><b>ブラウザで開いています。</b>Safariのタブを閉じたり、プライベートモードで使ったり、履歴を消したりすると、記録が消えることがあります。共有ボタンから「ホーム画面に追加」して、ホーム画面のPayNoteで記録してください。</p>
+  </section>
   <section class="bknudge" id="bkNudge" hidden>
     <p id="bkNudgeText"></p>
     <div class="nb">
@@ -467,6 +470,17 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 (function(){
   ['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()},{passive:false})});
   document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
+  (function(){
+    var vv=window.visualViewport, m=document.querySelector('meta[name=viewport]');
+    if(!vv||!m)return;
+    var base=m.getAttribute('content')||'', busy=false;
+    function fix(){
+      if(busy||Math.abs(vv.scale-1)<0.02)return;busy=true;
+      m.setAttribute('content','width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+      setTimeout(function(){if(base.indexOf('maximum-scale')<0)m.setAttribute('content',base);busy=false},300);
+    }
+    vv.addEventListener('resize',fix);fix();
+  })();
   var KEY='atonanen-v1', DAY=86400000;
   var CATS={out:['食費','学食','交通','教材・本','日用品','遊び・趣味','服・美容','通信','その他'],in:['仕送り','バイト代','奨学金','その他']};
   var PAYS=['現金','クレカ','交通系IC','QR決済','デビット','口座引落','振込・送金'];
@@ -539,6 +553,38 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 
   var toastTimer;
+  function isField(el){return !!el&&/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)&&el.type!=='radio'&&el.type!=='checkbox'}
+  function resetWin(){
+    var de=document.documentElement,bd=document.body;
+    if(window.scrollX||window.scrollY||de.scrollTop||bd.scrollTop||de.scrollLeft||bd.scrollLeft){window.scrollTo(0,0);de.scrollTop=0;bd.scrollTop=0;de.scrollLeft=0;bd.scrollLeft=0}
+  }
+  var lastSwipe=0;
+  function fixShift(){
+    var pg=$('pager');if(!pg)return;
+    if(!isField(document.activeElement)&&Date.now()-lastSwipe<450)return;
+    var i=(typeof curPage==='number'&&curPage>=0)?curPage:0, w=pg.clientWidth;
+    if(Math.abs(pg.scrollLeft-i*w)>1)pg.scrollLeft=i*w;
+    ['viewHome','viewMonth','viewBank'].forEach(function(id){var v=$(id);if(v&&v.scrollLeft)v.scrollLeft=0});
+    if(window.scrollX)window.scrollTo(0,window.scrollY);
+  }
+  function settleAll(){resetWin();fixShift()}
+  function dropKeyboard(){var ae=document.activeElement;if(isField(ae))ae.blur();settleAll();setTimeout(settleAll,120);setTimeout(settleAll,400)}
+  function settle(viewId,anchorId,fn){
+    var v=$(viewId),a=$(anchorId),t0=a?a.getBoundingClientRect().top:0;
+    fn();
+    if(a&&v&&!a.closest('[hidden]')){var d=a.getBoundingClientRect().top-t0;if(Math.abs(d)>0.5)v.scrollTop+=d}
+  }
+  document.addEventListener('focusout',function(e){if(!isField(e.target))return;setTimeout(function(){if(!isField(document.activeElement))settleAll()},80);setTimeout(function(){if(!isField(document.activeElement))settleAll()},400)});
+  document.addEventListener('focusin',function(e){if(!isField(e.target))return;setTimeout(fixShift,50);setTimeout(fixShift,350)});
+  window.addEventListener('scroll',function(){if(isField(document.activeElement)){if(window.scrollX)window.scrollTo(0,window.scrollY)}else settleAll()},{passive:true});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',function(){if(isField(document.activeElement))fixShift();else settleAll()});
+  ['viewHome','viewMonth','viewBank'].forEach(function(id){var v=$(id);if(v)v.addEventListener('scroll',function(){if(v.scrollLeft)v.scrollLeft=0},{passive:true})});
+  (function(){
+    var inFrame=false;try{inFrame=window.top!==window}catch(e){inFrame=true}
+    var standalone=window.navigator.standalone===true;try{standalone=standalone||matchMedia('(display-mode: standalone)').matches}catch(e){}
+    var mobile=/iPhone|iPad|iPod|Android/.test(navigator.userAgent);
+    $('browserWarn').hidden=inFrame||standalone||!mobile;
+  })();
   function toast(msg){var el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show')},1800)}
 
   function catsFor(type){
@@ -642,9 +688,9 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
         state.seq=(state.seq||0)+1;
         var ent={id:'e'+Date.now()+'_'+state.seq,n:state.seq,date:oS,type:'in',amount:amt,cat:pd.cat,memo:'給料'};state.entries.push(ent);
         var lk=null;if(!accWrap.hidden){state.incAcc[pd.cat]=accSel.value;lk=linkEntry(ent,accSel.value)}
-        state.payDone[pd.id]=oS;save();render();toast(pd.cat+'の給料を記録しました'+(lk?'（「'+accById(lk.acc).name+'」に入金）':''));
+        state.payDone[pd.id]=oS;save();dropKeyboard();settle('viewHome','entryForm',render);toast(pd.cat+'の給料を記録しました'+(lk?'（「'+accById(lk.acc).name+'」に入金）':''));
       });
-      c.querySelector('.pc-foot button').addEventListener('click',function(){state.payDone[pd.id]=oS;save();render();toast('今回は記録しませんでした')});
+      c.querySelector('.pc-foot button').addEventListener('click',function(){state.payDone[pd.id]=oS;save();settle('viewHome','entryForm',render);toast('今回は記録しませんでした')});
       box.appendChild(c);
     });
     box.hidden=!box.children.length;
@@ -900,6 +946,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   }
   var ticking=false;
   pager.addEventListener('scroll',function(){
+    if(isField(document.activeElement)){fixShift();return}
+    lastSwipe=Date.now();
     if(ticking)return;ticking=true;
     requestAnimationFrame(function(){
       ticking=false;var w=pager.clientWidth||1, r=Math.min(NAMES.length-1,Math.max(0,pager.scrollLeft/w));
@@ -908,7 +956,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     });
   },{passive:true});
   window.addEventListener('resize',function(){pager.scrollLeft=curPage*pager.clientWidth});
-  TABS.forEach(function(t,i){$(t).addEventListener('click',function(){if(curPage===i)$(VIEWS[i]).scrollTo({top:0,behavior:'smooth'});show(NAMES[i])})});
+  TABS.forEach(function(t,i){$(t).addEventListener('click',function(){var ae=document.activeElement;if(isField(ae))ae.blur();if(curPage===i)$(VIEWS[i]).scrollTo({top:0,behavior:'smooth'});show(NAMES[i])})});
   window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
   $('mPrev').addEventListener('click',function(){selYM=addMonths(selYM,-1);renderMonth()});
   $('mNext').addEventListener('click',function(){selYM=addMonths(selYM,1);renderMonth()});
@@ -1084,7 +1132,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     }
     state.lastAcc=a.value;save();armedBank=null;
     $('bAmount').value='';$('bMemo').value='';$('bDate').value=ymd(today0());
-    render();toast(to?'口座間の移動を記録しました':(dir==='in'?'入金':'出金')+'を記録しました'+(ent?'（記録画面にも反映）':''));
+    dropKeyboard();settle('viewBank','bankForm',render);toast(to?'口座間の移動を記録しました':(dir==='in'?'入金':'出金')+'を記録しました'+(ent?'（記録画面にも反映）':''));
   });
   $('accForm').addEventListener('submit',function(ev){
     ev.preventDefault();
@@ -1092,9 +1140,12 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(!name){toast('口座の名前を入力してください');$('accName').focus();return}
     var wasSample=hasSampleAcc();if(wasSample)dropSampleAcc();
     if(state.accounts.some(function(a){return a.name===name})){toast('同じ名前の口座があります');$('accName').focus();return}
+    var hadAcc=state.accounts.length>0;
     state.accounts.push({id:'a'+Date.now(),name:name,start:digits($('accStart').value)});
     save();$('accName').value='';$('accStart').value='';
-    render();toast(wasSample?'サンプルを消して「'+name+'」を追加しました':'「'+name+'」を追加しました');
+    dropKeyboard();
+    if(hadAcc)settle('viewBank','accForm',render);else{render();$('viewBank').scrollTop=0}
+    toast(wasSample?'サンプルを消して「'+name+'」を追加しました':'「'+name+'」を追加しました');
   });
   $('bankClearSample').addEventListener('click',function(){dropSampleAcc();save();renderBank();toast('口座のサンプルを消しました')});
 
@@ -1232,7 +1283,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(eAcc!==null){if(type==='in')state.incAcc[entry.cat]=eAcc;else state.payAcc[entry.pay]=eAcc;linked=linkEntry(entry,eAcc)}
     save();armedId=null;
     $('amount').value='';$('points').value='';updateSplit();$('memo').value='';$('date').value=ymd(today0());
-    render();toast((wasSample?'サンプルを消して記録しました':'記録しました')+(linked?'（「'+accById(linked.acc).name+'」にも反映）':''));
+    dropKeyboard();settle('viewHome','entryForm',render);toast((wasSample?'サンプルを消して記録しました':'記録しました')+(linked?'（「'+accById(linked.acc).name+'」にも反映）':''));
   });
   $('clearSample').addEventListener('click',function(){clearSample();save();render();toast('サンプルを消しました')});
 
