@@ -362,14 +362,18 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </section>
 
   <section class="card" id="budgetCard">
-    <div class="bhd"><h2>1日の予算</h2><button type="button" class="linkbtn" id="budEditBtn">編集</button></div>
+    <div class="bhd"><h2>予算</h2><button type="button" class="linkbtn" id="budEditBtn">編集</button></div>
     <div class="budlist" id="budList"></div>
     <div id="budEditor" hidden>
       <div class="clist" id="budManage"></div>
       <form id="budForm" class="budform" autocomplete="off" novalidate>
+        <div class="seg" role="radiogroup" aria-label="予算の期間">
+          <input type="radio" name="budper" id="bpDay" value="day" checked><label for="bpDay">1日の予算</label>
+          <input type="radio" name="budper" id="bpMonth" value="month"><label for="bpMonth">1か月の予算</label>
+        </div>
         <div class="bfield"><span class="lbl">対象の項目（いくつでも選べます）</span><div class="chips" id="budCats"></div></div>
         <div class="row2">
-          <label class="field" for="budAmt"><span>1日の予算</span><input id="budAmt" inputmode="numeric" placeholder="1,000"></label>
+          <label class="field" for="budAmt"><span id="budAmtLbl">1日の予算</span><input id="budAmt" inputmode="numeric" placeholder="1,000"></label>
           <label class="field" for="budName"><span>名前（なくてもOK）</span><input id="budName" maxlength="12" placeholder="例：食費"></label>
         </div>
         <div class="bbtns"><button type="submit" class="primary" id="budSubmit">予算を追加</button><button type="button" class="ghostbtn" id="budCancel" hidden>やめる</button></div>
@@ -1364,7 +1368,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       state.bank.push(y);bids[y.id]=1;bkAdded++;if(y.n>maxB)maxB=y.n;
     });
     state.bseq=maxB;
-    if(!state.budgets.length&&Array.isArray(d.budgets))d.budgets.forEach(function(b){if(b&&b.id&&b.name&&Array.isArray(b.cats)&&b.amount>0)state.budgets.push({id:String(b.id),name:String(b.name),cats:b.cats.map(String),amount:Math.round(b.amount)})});
+    if(!state.budgets.length&&Array.isArray(d.budgets))d.budgets.forEach(function(b){if(b&&b.id&&b.name&&Array.isArray(b.cats)&&b.amount>0)state.budgets.push({id:String(b.id),name:String(b.name),cats:b.cats.map(String),amount:Math.round(b.amount),period:b.period==='month'?'month':'day'})});
     if(!state.cashSetAt&&d.cashSetAt){state.cashAdj=Number(d.cashAdj)||0;state.cashSetAt=String(d.cashSetAt)}
     if(wasEmpty&&d.payday>=1&&d.payday<=31){state.payday=d.payday;$('payday').value=d.payday}
     if(!state.lastPay&&d.lastPay)state.lastPay=d.lastPay;
@@ -1406,18 +1410,26 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   function renderBudgets(){
     var list=$('budList');if(!list)return;
     var tStr=ymd(today0());list.textContent='';
+    var t=today0(), ym=tStr.slice(0,7), lastD=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(), daysLeft=lastD-t.getDate()+1;
     var spent={};state.budgets.forEach(function(b){spent[b.id]=0});
-    state.entries.forEach(function(e){if(e.type!=='out'||e.date!==tStr)return;state.budgets.forEach(function(b){if(budMatch(b,e.cat))spent[b.id]+=money(e)})});
-    if(!state.budgets.length){var em=document.createElement('div');em.className='empty';em.textContent='食費などの1日の予算を決めると、今日あといくら使えるかがここに出ます。「追加」から決めてください。';list.appendChild(em)}
-    state.budgets.forEach(function(b){
-      var sp=spent[b.id], left=b.amount-sp, over=left<0;
+    state.entries.forEach(function(e){
+      if(e.type!=='out')return;
+      state.budgets.forEach(function(b){
+        var hit=b.period==='month'?e.date.slice(0,7)===ym:e.date===tStr;
+        if(hit&&budMatch(b,e.cat))spent[b.id]+=money(e);
+      });
+    });
+    if(!state.budgets.length){var em=document.createElement('div');em.className='empty';em.textContent='食費などの予算を1日ごと・1か月ごとに決めると、あといくら使えるかがここに出ます。「追加」から決めてください。';list.appendChild(em)}
+    state.budgets.slice().sort(function(a,b){return (a.period==='month')-(b.period==='month')}).forEach(function(b){
+      var sp=spent[b.id], left=b.amount-sp, over=left<0, mon=b.period==='month';
       var r=document.createElement('div');r.className='bud'+(over?' over':'');
       r.innerHTML='<div class="top"><span class="nm"></span><span class="left"><small></small><span></span></span></div><div class="track"><div class="fill"></div></div><div class="meta"></div>';
       r.querySelector('.nm').textContent=b.name;
       r.querySelector('.left small').textContent=over?'オーバー':'あと';
       r.querySelector('.left span').textContent='¥'+yen(Math.abs(left));
       r.querySelector('.fill').style.width=Math.min(100,b.amount?sp/b.amount*100:100)+'%';
-      r.querySelector('.meta').textContent='今日 ¥'+yen(sp)+' ／ 予算 ¥'+yen(b.amount)+(b.cats[0]==='*'?'':'（'+b.cats.join('・')+'）');
+      r.querySelector('.meta').textContent=(mon?(t.getMonth()+1)+'月 ¥':'今日 ¥')+yen(sp)+' ／ 予算 ¥'+yen(b.amount)+(mon&&!over?'・残り'+daysLeft+'日で1日 ¥'+yen(Math.floor(left/daysLeft)):'')+(b.cats[0]==='*'?'':'（'+b.cats.join('・')+'）');
+      r.querySelector('.nm').textContent=b.name+(mon?'（今月）':'（今日）');
       list.appendChild(r);
     });
     $('budEditBtn').textContent=budOpen?'閉じる':(state.budgets.length?'編集':'追加');
@@ -1429,7 +1441,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     state.budgets.forEach(function(b){
       var row=document.createElement('div');row.className='ci';
       row.innerHTML='<span class="n"></span><span class="amt"></span><button type="button">変更</button><button type="button"></button>';
-      row.children[0].textContent=b.name;row.children[1].textContent='¥'+yen(b.amount)+'/日';
+      row.children[0].textContent=b.name;row.children[1].textContent='¥'+yen(b.amount)+(b.period==='month'?'/月':'/日');
       row.children[2].setAttribute('aria-label',b.name+'の予算を変更');
       row.children[2].addEventListener('click',function(){loadBud(b)});
       var del=row.children[3];
@@ -1452,9 +1464,11 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       box.appendChild(inp);box.appendChild(lab);
     });
   }
-  function resetBudForm(){editingBud=null;buildBudCats([]);$('budAmt').value='';$('budName').value='';$('budSubmit').textContent='予算を追加';$('budCancel').hidden=true}
+  function setBudPer(v){$(v==='month'?'bpMonth':'bpDay').checked=true;$('budAmtLbl').textContent=v==='month'?'1か月の予算':'1日の予算';$('budAmt').placeholder=v==='month'?'30,000':'1,000'}
+  document.querySelectorAll('input[name=budper]').forEach(function(r){r.addEventListener('change',function(){setBudPer(this.value)})});
+  function resetBudForm(){editingBud=null;setBudPer('day');buildBudCats([]);$('budAmt').value='';$('budName').value='';$('budSubmit').textContent='予算を追加';$('budCancel').hidden=true}
   function loadBud(b){
-    editingBud=b.id;buildBudCats(b.cats);$('budAmt').value=yen(b.amount);$('budName').value=b.name;
+    editingBud=b.id;setBudPer(b.period==='month'?'month':'day');buildBudCats(b.cats);$('budAmt').value=yen(b.amount);$('budName').value=b.name;
     $('budSubmit').textContent='変更を保存';$('budCancel').hidden=false;
     try{$('budForm').scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}
   }
@@ -1467,11 +1481,12 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(cats.indexOf('*')>=0)cats=['*'];
     if(!cats.length){toast('対象の項目を選んでください');return}
     var amt=digits($('budAmt').value);
-    if(!amt){toast('1日の予算を入力してください');$('budAmt').focus();return}
+    var per=document.querySelector('input[name=budper]:checked').value==='month'?'month':'day';
+    if(!amt){toast((per==='month'?'1か月':'1日')+'の予算を入力してください');$('budAmt').focus();return}
     var name=$('budName').value.trim()||(cats[0]==='*'?'すべての支出':cats.join('・'));
     var msg;
-    if(editingBud){state.budgets.forEach(function(b){if(b.id===editingBud){b.name=name;b.cats=cats;b.amount=amt}});msg='「'+name+'」の予算を変更しました'}
-    else{state.budgets.push({id:'g'+Date.now(),name:name,cats:cats,amount:amt});msg='「'+name+'」の予算を追加しました'}
+    if(editingBud){state.budgets.forEach(function(b){if(b.id===editingBud){b.name=name;b.cats=cats;b.amount=amt;b.period=per}});msg='「'+name+'」の予算を変更しました'}
+    else{state.budgets.push({id:'g'+Date.now(),name:name,cats:cats,amount:amt,period:per});msg='「'+name+'」の予算を追加しました'}
     save();resetBudForm();dropKeyboard();settle('viewHome','budgetCard',renderBudgets);toast(msg);
   });
 
