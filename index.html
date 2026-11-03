@@ -257,6 +257,13 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 .rov .rn{margin-right:auto;font-weight:700;font-size:14px;color:var(--ink);background:var(--sheet);border-radius:8px;padding:4px 10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rov button{width:44px;height:44px;flex:none;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);font-size:18px;line-height:1}
 .rov button:disabled{opacity:.3}
+.accedit{display:flex;flex-direction:column;gap:10px;padding:12px;margin:6px 0;border:1px solid var(--accent);border-radius:12px;background:var(--accent-soft)}
+.accedit .t{font-weight:700;font-size:14px}
+.accedit .cur{font-size:12px;color:var(--muted)}
+.accedit .bb{display:flex;gap:8px}
+.accedit .bb button{flex:1;border:0;border-radius:10px;padding:10px;font-weight:700}
+.accedit .bb .ok{background:var(--accent);color:var(--on-accent)}
+.accedit .bb .ng{background:var(--sheet);color:var(--muted);border:1px solid var(--rule)}
 .danger{border:1px solid var(--warn);color:var(--warn);background:none;border-radius:10px;padding:10px;font-weight:700}
 .danger.armed{background:var(--warn);color:var(--sheet)}
 
@@ -501,7 +508,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     <div class="lead"><span>口座・電子マネーの合計</span><span id="bankCnt"></span></div>
     <div class="total" id="bankTotal">¥0</div>
     <div class="accs" id="accList"></div>
-    <p class="hint2" id="accHint" hidden>口座をタップすると、その口座の記録だけを表示します</p>
+    <p class="hint2" id="accHint" hidden>タップでその口座の記録だけを表示、長押しで名前・残高を変更できます</p>
   </section>
 
   <section data-sec="bform" class="card" id="bankFormCard">
@@ -1182,6 +1189,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       b.innerHTML='<span class="an"></span><span class="ab"></span>';
       b.children[0].textContent=a.name;if(isEm(a)){var kd=document.createElement('span');kd.className='kd';kd.textContent='電子マネー';b.children[0].appendChild(kd)}b.children[1].textContent=sgnYen(B.bal[a.id]);
       b.setAttribute('aria-label',a.name+' 残高'+sgnNum(B.bal[a.id])+'円');
+      longPress(b,function(){openAccSheet(a)});
       b.addEventListener('click',function(){
         selAcc=selAcc===a.id?null:a.id;
         if(selAcc)[].forEach.call(document.querySelectorAll('input[name=bacc]'),function(r){r.checked=r.value===a.id});
@@ -1189,7 +1197,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       });
       list.appendChild(b);
     });
-    $('accHint').hidden=accs.length<2;
+    $('accHint').hidden=!accs.length||hasSampleAcc();
     $('bankFormCard').hidden=!has;$('bankBookCard').hidden=!has;$('accAddCard').style.order=has?'':'-1';
     renderBankForm();
 
@@ -1222,22 +1230,20 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     renderEAcc();
     var man=$('accManage');man.textContent='';
     accs.forEach(function(a){
+      if(editAccId===a.id){man.appendChild(accEditor(a,B.bal[a.id]));return}
       var row=document.createElement('div');row.className='ci';
-      row.innerHTML='<span class="n"></span><button type="button"></button>';
+      row.innerHTML='<span class="n"></span><span class="amt"></span><button type="button">変更</button><button type="button"></button>';
       row.children[0].textContent=a.name+(a.sample?'（サンプル）':'');
-      var btn=row.children[1];
+      row.children[1].textContent=sgnYen(B.bal[a.id]);
+      var ed=row.children[2];ed.setAttribute('aria-label',a.name+'の名前・残高を変更');
+      if(a.sample)ed.hidden=true;
+      ed.addEventListener('click',function(){openAccEditor(a)});
+      var btn=row.children[3];
       if(armedAcc===a.id){btn.className='armed';btn.textContent='本当に削除（記録も消えます）'}else btn.textContent='削除';
       btn.setAttribute('aria-label',a.name+'を削除');
       btn.addEventListener('click',function(){
         if(armedAcc!==a.id){armedAcc=a.id;renderBank();return}
-        armedAcc=null;
-        var gone=state.bank.filter(function(x){return x.acc===a.id&&x.pair}).map(function(x){return x.pair});
-        state.bank.forEach(function(x){if(x.acc===a.id&&x.entry)state.entries.forEach(function(y){if(y.id===x.entry)delete y.bank})});
-        state.bank=state.bank.filter(function(x){return x.acc!==a.id});
-        Object.keys(state.incAcc).forEach(function(k){if(state.incAcc[k]===a.id)delete state.incAcc[k]});Object.keys(state.payAcc).forEach(function(k){if(state.payAcc[k]===a.id)delete state.payAcc[k]});
-        state.bank.forEach(function(x){if(x.pair&&gone.indexOf(x.pair)>=0){delete x.pair;if(!x.memo)x.memo='「'+a.name+'」'+(x.dir==='in'?'から':'へ')}});
-        state.accounts=state.accounts.filter(function(y){return y.id!==a.id});
-        save();render();toast('「'+a.name+'」を削除しました');
+        armedAcc=null;deleteAccount(a);
       });
       man.appendChild(row);
     });
@@ -1525,7 +1531,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     el.addEventListener('pointermove',function(e){if(t&&(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8))cancel()});
     ['pointerup','pointerleave','pointercancel'].forEach(function(n){el.addEventListener(n,cancel)});
     el.addEventListener('contextmenu',function(e){e.preventDefault();if(!fired){cancel();fired=true;fn()}});
-    el.addEventListener('click',function(e){if(fired){e.preventDefault();e.stopPropagation()}});
+    el.addEventListener('click',function(e){if(fired){e.preventDefault();e.stopImmediatePropagation()}});
     el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}});
   }
   var sheetAct=null, sheetDelArmed=false, sheetReturn=null;
@@ -1610,12 +1616,57 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(editingBankId===x.id)endBankEdit();
     save();render();toast(x.pair&&x.method!=='チャージ'?'口座間の移動を削除しました':(hadE?'削除しました（記録画面の分も削除）':'削除しました'));
   }
+  var editAccId=null;
+  function deleteAccount(a){
+    var gone=state.bank.filter(function(x){return x.acc===a.id&&x.pair}).map(function(x){return x.pair});
+    state.bank.forEach(function(x){if(x.acc===a.id&&x.entry)state.entries.forEach(function(y){if(y.id===x.entry)delete y.bank})});
+    state.bank=state.bank.filter(function(x){return x.acc!==a.id});
+    Object.keys(state.incAcc).forEach(function(k){if(state.incAcc[k]===a.id)delete state.incAcc[k]});Object.keys(state.payAcc).forEach(function(k){if(state.payAcc[k]===a.id)delete state.payAcc[k]});
+    state.bank.forEach(function(x){if(x.pair&&gone.indexOf(x.pair)>=0){delete x.pair;if(!x.memo)x.memo='「'+a.name+'」'+(x.dir==='in'?'から':'へ')}});
+    state.accounts=state.accounts.filter(function(y){return y.id!==a.id});
+    if(editAccId===a.id)editAccId=null;
+    save();render();toast('「'+a.name+'」を削除しました');
+  }
+  function accEditor(a,bal){
+    var w=document.createElement('div');w.className='accedit';
+    w.innerHTML='<div class="t"></div><div class="row2"><label class="field" for="aeName"><span>名前</span><input id="aeName" maxlength="16"></label><label class="field" for="aeBal"><span>いまの残高</span><input id="aeBal" inputmode="numeric"></label></div><div class="cur"></div><div class="bb"><button type="button" class="ng">やめる</button><button type="button" class="ok">保存</button></div>';
+    w.querySelector('.t').textContent='「'+a.name+'」を変更';
+    w.querySelector('.cur').textContent='アプリ上の残高は '+sgnYen(bal)+' です。違っていたら、実際の残高を入れてください。差額は今日の日付で「残高調整」として記録されます。';
+    var ni=w.querySelector('#aeName'),bi=w.querySelector('#aeBal');ni.value=a.name;bi.value=bal>0?yen(bal):'0';
+    bi.addEventListener('input',function(){var v=this.value.replace(/[^0-9]/g,'');this.value=v?Number(v).toLocaleString('ja-JP'):''});
+    w.querySelector('.ng').addEventListener('click',function(){editAccId=null;dropKeyboard();renderBank()});
+    w.querySelector('.ok').addEventListener('click',function(){
+      var name=ni.value.trim();
+      if(!name){toast('名前を入力してください');ni.focus();return}
+      if(state.accounts.some(function(x){return x.id!==a.id&&x.name===name})){toast('同じ名前のものがあります');ni.focus();return}
+      var want=digits(bi.value), cur=accBalances().bal[a.id], diff=want-cur, msg=[];
+      if(name!==a.name){msg.push('名前を「'+name+'」に');a.name=name}
+      if(diff){
+        state.bseq=(state.bseq||0)+1;
+        state.bank.push({id:'b'+Date.now()+'_'+state.bseq+'a',n:state.bseq,date:ymd(today0()),acc:a.id,dir:diff>0?'in':'out',method:'残高調整',amount:Math.abs(diff),memo:''});
+        msg.push('残高を ¥'+yen(want)+' に');
+      }
+      editAccId=null;save();dropKeyboard();render();
+      toast(msg.length?msg.join('、')+'変更しました':'変更はありませんでした');
+    });
+    return w;
+  }
+  function openAccEditor(a){
+    editAccId=a.id;armedAcc=null;renderBank();
+    setTimeout(function(){var bi=$('aeBal');if(!bi)return;try{bi.closest('.accedit').scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}},50);
+  }
+  function openAccSheet(a){
+    var bal=accBalances().bal[a.id];
+    openSheet(a.name+'　'+sgnYen(bal),(isEm(a)?'電子マネー':'銀行口座')+(a.sample?'（サンプル）':''),a.sample?null:function(){openAccEditor(a)},function(){deleteAccount(a)},'名前・残高を変更する');
+    $('sheetDel').textContent='削除する（記録も消えます）';
+  }
   function openBankSheet(x){
     var pt=bankPartner(x), pa=pt?accById(pt.acc):null, sub;
     if(x.entry)sub='記録画面の記録と連動しています。編集は記録画面で行います';
     else sub=[pa?(x.dir==='out'?'→ ':'← ')+pa.name:(x.src==='cash'?'← 現金':''),x.memo].filter(Boolean).join('・');
     var linkedE=null;if(x.entry)state.entries.forEach(function(y){if(y.id===x.entry)linkedE=y});
-    var onEdit=x.sample?null:(linkedE?function(){startEntryEdit(linkedE)}:function(){startBankEdit(x)});
+    if(x.method==='残高調整')sub='残高を合わせたときの調整です。削除すると調整前の残高に戻ります';
+    var onEdit=(x.sample||x.method==='残高調整')?null:(linkedE?function(){startEntryEdit(linkedE)}:function(){startBankEdit(x)});
     openSheet(bankTitle(x),sub,onEdit,function(){deleteBank(x)},linkedE?'記録画面で編集する':null);
   }
   function setRadio(name,val){var hit=false;[].forEach.call(document.querySelectorAll('input[name='+name+']'),function(r){if(r.value===val){r.checked=true;hit=true}});return hit}
