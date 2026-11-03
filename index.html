@@ -202,6 +202,35 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 .pc-acc{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .pc-acc select{flex:1;min-width:0;border:1px solid var(--accent);border-radius:8px;background:var(--sheet);padding:6px 8px;font-size:14px;color:var(--ink)}
 .brow .t .pm.ac{border-color:var(--accent);color:var(--accent)}
+.hero .lead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero .cbtn{border:1px solid color-mix(in srgb,var(--on-accent) 45%,transparent);background:none;color:inherit;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;opacity:1}
+.hero .big .neg{font-size:.6em;margin-right:2px}
+.cashedit{display:flex;gap:8px;margin:4px 0 2px}
+.cashedit input{flex:1;min-width:0;border:0;border-radius:8px;padding:8px 10px;font-size:16px;font-family:var(--num);background:var(--on-accent);color:var(--ink)}
+.cashedit button{border:0;border-radius:8px;padding:8px 12px;font-weight:700;background:var(--on-accent);color:var(--accent);white-space:nowrap}
+.cashedit button.g{background:none;color:inherit;border:1px solid color-mix(in srgb,var(--on-accent) 45%,transparent)}
+.hero .hint3{font-size:12px;opacity:.9;margin-top:2px}
+.acc .kd{font-size:10px;opacity:.7;margin-left:6px;font-weight:500}
+.bhd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.bhd h2{margin:0}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:700;font-size:13px;padding:4px 0}
+.budlist{display:flex;flex-direction:column;gap:14px}
+.bud{display:flex;flex-direction:column;gap:6px}
+.bud .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.bud .nm{font-weight:700;font-size:14px;min-width:0;overflow-wrap:anywhere}
+.bud .left{font-family:var(--num);font-size:18px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bud .left small{font-family:var(--body);font-size:11px;color:var(--muted);margin-right:4px}
+.bud.over .left{color:var(--warn)}
+.bud .track{height:8px;background:var(--paper);border-radius:4px;overflow:hidden}
+.bud .fill{height:100%;background:var(--accent);border-radius:4px}
+.bud.over .fill{background:var(--warn)}
+.bud .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#budEditor{display:flex;flex-direction:column;gap:12px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--rule)}
+.budform{display:flex;flex-direction:column;gap:12px}
+.bbtns{display:flex;gap:8px}
+.bbtns .primary{flex:1}
+.ghostbtn{border:1px solid var(--rule);background:none;border-radius:12px;padding:0 16px;font-weight:700;color:var(--muted)}
+.clist .ci .amt{font-family:var(--num);font-size:13px;color:var(--muted);white-space:nowrap}
 .danger{border:1px solid var(--warn);color:var(--warn);background:none;border-radius:10px;padding:10px;font-weight:700}
 .danger.armed{background:var(--warn);color:var(--sheet)}
 
@@ -266,11 +295,17 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </div>
 
   <section class="hero" id="hero" aria-live="polite">
-    <div class="lead" id="heroLead">今日あと</div>
+    <div class="lead"><span id="heroLead">財布の現金</span><button type="button" class="cbtn" id="cashBtn">数え直す</button></div>
     <div class="big"><small>¥</small><span id="heroBig">0</span></div>
+    <div class="cashedit" id="cashEdit" hidden>
+      <input id="cashInput" inputmode="numeric" placeholder="いま財布にある金額" aria-label="いま財布にある現金">
+      <button type="button" id="cashSave">合わせる</button>
+      <button type="button" class="g" id="cashCancel">やめる</button>
+    </div>
     <div class="sub" id="heroSub"></div>
+    <div class="hint3" id="heroHint" hidden></div>
     <div class="foot">
-      <div><span>残高</span><span id="balance">¥0</span></div>
+      <div><span>口座・電子マネー</span><span id="balance">¥0</span></div>
       <div><span>この期間の支出</span><span id="spent">¥0</span></div>
       <div><span>ポイント利用</span><span id="ptsUsed">0P</span></div>
     </div>
@@ -308,6 +343,22 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       <div id="rows"></div>
     </div>
     <p class="hint">行を2回タップすると取り消せます</p>
+  </section>
+
+  <section class="card" id="budgetCard">
+    <div class="bhd"><h2>1日の予算</h2><button type="button" class="linkbtn" id="budEditBtn">編集</button></div>
+    <div class="budlist" id="budList"></div>
+    <div id="budEditor" hidden>
+      <div class="clist" id="budManage"></div>
+      <form id="budForm" class="budform" autocomplete="off" novalidate>
+        <div class="bfield"><span class="lbl">対象の項目（いくつでも選べます）</span><div class="chips" id="budCats"></div></div>
+        <div class="row2">
+          <label class="field" for="budAmt"><span>1日の予算</span><input id="budAmt" inputmode="numeric" placeholder="1,000"></label>
+          <label class="field" for="budName"><span>名前（なくてもOK）</span><input id="budName" maxlength="12" placeholder="例：食費"></label>
+        </div>
+        <div class="bbtns"><button type="submit" class="primary" id="budSubmit">予算を追加</button><button type="button" class="ghostbtn" id="budCancel" hidden>やめる</button></div>
+      </form>
+    </div>
   </section>
 
   <section class="card">
@@ -406,7 +457,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </div>
 
   <section class="banktop">
-    <div class="lead"><span>口座の合計</span><span id="bankCnt"></span></div>
+    <div class="lead"><span>口座・電子マネーの合計</span><span id="bankCnt"></span></div>
     <div class="total" id="bankTotal">¥0</div>
     <div class="accs" id="accList"></div>
     <p class="hint2" id="accHint" hidden>口座をタップすると、その口座の記録だけを表示します</p>
@@ -436,7 +487,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </section>
 
   <section class="card" id="bankBookCard">
-    <h2 id="bankBookTitle">すべての口座の入出金</h2>
+    <h2 id="bankBookTitle">すべての入出金</h2>
     <div class="book">
       <div class="bhead"><span>日付</span><span>摘要</span><span>金額</span><span>口座残高</span></div>
       <div id="bankRows"></div>
@@ -445,13 +496,14 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   </section>
 
   <section class="card" id="accAddCard">
-    <h2>口座を追加</h2>
+    <h2>口座・電子マネーを追加</h2>
     <form id="accForm" class="accform" autocomplete="off" novalidate>
+      <label class="field" for="accKind"><span>種類</span><select id="accKind"><option value="bank">銀行口座</option><option value="emoney">電子マネー（PayPayなど）</option></select></label>
       <div class="row2">
-        <label class="field" for="accName"><span>口座の名前</span><input id="accName" maxlength="16" placeholder="例：ゆうちょ"></label>
+        <label class="field" for="accName"><span>名前</span><input id="accName" maxlength="16" placeholder="例：ゆうちょ"></label>
         <label class="field" for="accStart"><span>いまの残高</span><input id="accStart" inputmode="numeric" placeholder="0"></label>
       </div>
-      <button type="submit" class="primary">口座を追加</button>
+      <button type="submit" class="primary">追加する</button>
     </form>
     <div class="clist" id="accManage"></div>
   </section>
@@ -484,7 +536,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   var KEY='atonanen-v1', DAY=86400000;
   var CATS={out:['食費','学食','交通','教材・本','日用品','遊び・趣味','服・美容','通信','その他'],in:['仕送り','バイト代','奨学金','その他']};
   var PAYS=['現金','クレカ','交通系IC','QR決済','デビット','口座引落','振込・送金'];
-  var LINKPAY={'口座引落':'引き落とし','デビット':'デビット','振込・送金':'振込'}, BANK2PAY={'振込':'振込・送金','ことら送金':'振込・送金','引き落とし':'口座引落','デビット':'デビット'};
+  var LINKPAY={'口座引落':'引き落とし','デビット':'デビット','振込・送金':'振込','QR決済':'支払い'}, BANK2PAY={'振込':'振込・送金','ことら送金':'振込・送金','引き落とし':'口座引落','デビット':'デビット','支払い':'QR決済','送金':'QR決済'};
   var $=function(id){return document.getElementById(id)};
   function pad(n){return String(n).padStart(2,'0')}
   function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
@@ -494,6 +546,16 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   function pts(e){return e.type==='out'?Math.min(e.points||0,e.amount):0}
   function money(e){return e.amount-pts(e)}
   function delta(e){return e.type==='in'?e.amount:-money(e)}
+  function cashFlows(entries,bank){
+    var c=0;
+    entries.forEach(function(e){if(e.type==='in'){if(!e.bank)c+=e.amount}else if(e.pay==='現金')c-=money(e)});
+    bank.forEach(function(x){if(x.method==='ATM')c+=x.dir==='out'?x.amount:-x.amount;if(x.src==='cash')c-=x.amount});
+    return c;
+  }
+  function cashNow(){
+    if(!state.cashSetAt&&state.sample)return 8240+cashFlows(state.entries.filter(function(e){return !e.sample}),state.bank.filter(function(x){return !x.sample}));
+    return (state.cashSetAt?(state.cashAdj||0):0)+cashFlows(state.entries,state.bank);
+  }
   function digits(v){return Number(String(v).replace(/[^0-9]/g,''))||0}
   function payIn(y,m,D){var last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(D,last))}
   function period(D,t){var s=payIn(t.getFullYear(),t.getMonth(),D);if(s>t)s=payIn(t.getFullYear(),t.getMonth()-1,D);return{start:s,end:payIn(s.getFullYear(),s.getMonth()+1,D)}}
@@ -536,19 +598,24 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     bt(5,'sa2','out','振込',20000,'','sp1');
     bt(5,'sa3','in','振込',20000,'','sp1');
     bt(6,'sa2','out','ことら送金',1500,'友達に立て替え分');
-    return {payday:25,sample:true,entries:list,seq:0,accounts:accs,bank:bk,bseq:bs};
+    accs.push({id:'sa4',name:'PayPay',kind:'emoney',start:1200,sample:true});
+    bt(4,'sa2','out','チャージ',5000,'','sp2');
+    bt(4,'sa4','in','チャージ',5000,'','sp2');
+    bt(5,'sa4','out','支払い',1080,'スーパー');
+    return {payday:25,sample:true,entries:list,seq:0,accounts:accs,bank:bk,bseq:bs,budgets:[]};
   }
 
   var state;
   try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
   if(!state||!Array.isArray(state.entries))state=sampleData();
   else if(state.sample&&state.entries.some(function(e){return !e.sample})){state.entries=state.entries.filter(function(e){return !e.sample});state.sample=false;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat','bkSnooze'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
+  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat','bkSnooze','budgets','cashAdj','cashSetAt'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
   if(!state.custom)state.custom={out:[],in:[]};
   if(!state.paydays)state.paydays=[];
   if(!state.payDone)state.payDone={};
   if(!Array.isArray(state.accounts))state.accounts=[];
   if(!Array.isArray(state.bank))state.bank=[];
+  if(!Array.isArray(state.budgets))state.budgets=[];
   ['incAcc','payAcc','bLink','bLinkCat'].forEach(function(k){if(!state[k]||typeof state[k]!=='object')state[k]={}});
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 
@@ -758,15 +825,15 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     var wrap=$('eAccWrap'), sel=$('eAcc'), accs=realAccs(), tEl=document.querySelector('input[name=type]:checked');
     if(!wrap||!tEl)return;
     var type=tEl.value, payEl=document.querySelector('input[name=pay]:checked'), pay=payEl?payEl.value:'', catEl=document.querySelector('input[name=cat]:checked'), cat=catEl?catEl.value:'';
-    var on=accs.length>0&&(type==='in'||!!LINKPAY[pay]);
-    wrap.hidden=!on;if(!on)return;
-    $('eAccLbl').textContent=type==='in'?'入金先の口座':(pay==='振込・送金'?'送金元の口座':'引き落とされる口座');
+    var list=type==='in'?accs:(pay==='QR決済'?accs.filter(function(a){return a.kind==='emoney'}):(LINKPAY[pay]?accs.filter(function(a){return a.kind!=='emoney'}):[]));
+    wrap.hidden=!list.length;if(!list.length)return;
+    $('eAccLbl').textContent=type==='in'?'入金先':(pay==='QR決済'?'支払った電子マネー':(pay==='振込・送金'?'送金元の口座':'引き落とされる口座'));
     sel.textContent='';
-    var o=document.createElement('option');o.value='';o.textContent=type==='in'?'口座に入れない（現金など）':'口座とは連動しない';sel.appendChild(o);
-    accs.forEach(function(a){var op=document.createElement('option');op.value=a.id;op.textContent=a.name;sel.appendChild(op)});
-    var def=type==='in'?state.incAcc[cat]:state.payAcc[pay];
-    if(def===undefined)def=type==='in'?'':accs[0].id;
-    sel.value=(def===''||accById(def))?def:'';
+    var o=document.createElement('option');o.value='';o.textContent=type==='in'?'現金で受け取る':(pay==='QR決済'?'残高を管理しない':'口座とは連動しない');sel.appendChild(o);
+    list.forEach(function(a){var op=document.createElement('option');op.value=a.id;op.textContent=a.name;sel.appendChild(op)});
+    var def=type==='in'?state.incAcc[cat]:state.payAcc[pay], ok=list.some(function(a){return a.id===def});
+    if(def===undefined||(def!==''&&!ok))def=type==='in'?'':list[0].id;
+    sel.value=def;
   }
   function linkEntry(e,accId){
     if(!accId||!accById(accId))return null;
@@ -826,13 +893,16 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       if(e.type==='out'&&e.date>=sStr&&e.date<eStr){spentPeriod+=money(e);ptsPeriod+=pts(e);addTo(byCat,e.cat,e);addTo(byPay,e.pay||'未設定',e)}
     });
     var daysLeft=Math.max(1,Math.round((p.end-t)/DAY));
-    var perDay=Math.floor((balNow+spentToday)/daysLeft), left=perDay-spentToday;
-    var hero=$('hero');
-    if(left>=0){hero.classList.remove('over');$('heroLead').textContent='今日あと';$('heroBig').textContent=yen(left)}
-    else{hero.classList.add('over');$('heroLead').textContent='今日は目安を超えています';$('heroBig').textContent=yen(-left)}
+    var hero=$('hero'), cash=cashNow(), hb=$('heroBig');
+    hero.classList.toggle('over',cash<0);
+    hb.textContent=yen(Math.abs(cash));if(cash<0){var ng=document.createElement('span');ng.className='neg';ng.textContent='−';hb.insertBefore(ng,hb.firstChild)}
     var nx=p.end;
-    $('heroSub').textContent=(perDay>0?'1日の目安 ¥'+yen(perDay):'残高が足りません')+'　次の入金 '+(nx.getMonth()+1)+'/'+nx.getDate()+'（あと'+daysLeft+'日）';
-    $('balance').textContent=sgnYen(balNow);
+    $('heroSub').textContent='次の入金 '+(nx.getMonth()+1)+'/'+nx.getDate()+'（あと'+daysLeft+'日）'+(state.cashSetAt?'　最後に数えた日 '+md(parse(state.cashSetAt)).replace(/（.）/,''):'');
+    var hint=$('heroHint');
+    if(!state.cashSetAt&&!state.sample){hint.hidden=false;hint.textContent='「数え直す」から、いま財布にある現金を入れてください'}else hint.hidden=true;
+    var accTotal=0, AB=accBalances();state.accounts.forEach(function(a){accTotal+=AB.bal[a.id]});
+    $('balance').textContent=sgnYen(accTotal);
+    renderBudgets(spentToday,tStr);
     $('spent').textContent='¥'+yen(spentPeriod);
     $('ptsUsed').textContent=yen(ptsPeriod)+'P';
 
@@ -961,7 +1031,12 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   $('mPrev').addEventListener('click',function(){selYM=addMonths(selYM,-1);renderMonth()});
   $('mNext').addEventListener('click',function(){selYM=addMonths(selYM,1);renderMonth()});
 
-  var BM={out:['振込','ことら送金','引き落とし','ATM'],in:['振込','ことら送金','ATM']};
+  function isEm(a){return !!a&&a.kind==='emoney'}
+  function methodsFor(dir,acc){
+    if(isEm(acc))return dir==='out'?['支払い','送金']:['チャージ','受け取り'];
+    var hasEm=state.accounts.some(isEm);
+    return dir==='out'?['振込','ことら送金','引き落とし','ATM'].concat(hasEm?['チャージ']:[]):['振込','ことら送金','ATM'];
+  }
   var selAcc=null, armedBank=null, armedAcc=null;
   function accById(id){for(var i=0;i<state.accounts.length;i++)if(state.accounts[i].id===id)return state.accounts[i];return null}
   function bankSorted(){return state.bank.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:(a.n||0)-(b.n||0)})}
@@ -981,33 +1056,52 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     var lab=document.createElement('label');lab.htmlFor=id;lab.textContent=text;box.appendChild(inp);box.appendChild(lab);
   }
   function renderBankForm(){
-    var dir=bankDir(), box=$('bAccChips'), prev=document.querySelector('input[name=bacc]:checked');
+    var box=$('bAccChips'), prev=document.querySelector('input[name=bacc]:checked');
     var pv=prev?prev.value:(selAcc||state.lastAcc);
     if(!accById(pv))pv=state.accounts.length?state.accounts[0].id:null;
     box.textContent='';
-    state.accounts.forEach(function(a,i){chip(box,'bacc','ba'+i,a.id,a.name,a.id===pv,renderBankTo)});
-    var mb=$('bMethods'), pm=document.querySelector('input[name=bmethod]:checked'), pmv=pm?pm.value:'振込';
-    if(BM[dir].indexOf(pmv)<0)pmv=BM[dir][0];
+    state.accounts.forEach(function(a,i){chip(box,'bacc','ba'+i,a.id,a.name,a.id===pv,renderBankMethods)});
+    $('bMemo').placeholder=bankDir()==='out'?'例：家賃、カード代':'例：カフェ 給料';
+    renderBankMethods();
+  }
+  function renderBankMethods(){
+    var dir=bankDir(), a=document.querySelector('input[name=bacc]:checked'), acc=a?accById(a.value):null, list=methodsFor(dir,acc);
+    var mb=$('bMethods'), pm=document.querySelector('input[name=bmethod]:checked'), pmv=pm?pm.value:list[0];
+    if(list.indexOf(pmv)<0)pmv=list[0];
     mb.textContent='';
-    BM[dir].forEach(function(m,i){chip(mb,'bmethod','bm'+i,m,m,m===pmv,renderBankTo)});
-    $('bMemo').placeholder=dir==='out'?'例：家賃、カード代':'例：カフェ 給料';
+    list.forEach(function(m,i){chip(mb,'bmethod','bm'+i,m,m,m===pmv,renderBankTo)});
     renderBankTo();
   }
   function renderBankTo(){
     var dir=bankDir(), m=document.querySelector('input[name=bmethod]:checked'), a=document.querySelector('input[name=bacc]:checked');
-    var on=!!(m&&a&&(m.value==='振込'||m.value==='ことら送金')&&state.accounts.length>1);
+    var acc=a?accById(a.value):null, mv=m?m.value:'', label='', other=null, list=[], fmt;
+    if(acc&&!isEm(acc)&&(mv==='振込'||mv==='ことら送金')){
+      list=state.accounts.filter(function(x){return x.id!==acc.id&&!isEm(x)});
+      label=dir==='out'?'送り先':'送金元';other=['',dir==='out'?'ほかの人・お店':'ほかの人・会社'];
+      fmt=function(x){return '自分の「'+x.name+'」'+(dir==='out'?'へ':'から')};
+    }else if(acc&&!isEm(acc)&&mv==='チャージ'&&dir==='out'){
+      list=state.accounts.filter(isEm);label='チャージ先';other=['','ほかの電子マネー（残高を管理しない）'];
+      fmt=function(x){return x.name};
+    }else if(isEm(acc)&&mv==='チャージ'&&dir==='in'){
+      list=state.accounts.filter(function(x){return !isEm(x)});label='チャージ元';
+      fmt=function(x){return x.name+'（口座から）'};
+    }
+    var on=list.length>0||(isEm(acc)&&mv==='チャージ'&&dir==='in');
     $('bToWrap').hidden=!on;if(!on){renderBankLink();return}
     var sel=$('bTo'),cur=sel.value;sel.textContent='';
-    $('bToLbl').textContent=dir==='out'?'送り先':'送金元';
-    var o=document.createElement('option');o.value='';o.textContent=dir==='out'?'ほかの人・お店':'ほかの人・会社';sel.appendChild(o);
-    state.accounts.forEach(function(x){if(x.id===a.value)return;var op=document.createElement('option');op.value=x.id;op.textContent='自分の「'+x.name+'」'+(dir==='out'?'へ':'から');sel.appendChild(op)});
-    sel.value=[].some.call(sel.options,function(op){return op.value===cur})?cur:'';
+    $('bToLbl').textContent=label;
+    function add(v,t){var o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)}
+    if(other&&mv!=='チャージ')add(other[0],other[1]);
+    list.forEach(function(x){add(x.id,fmt(x))});
+    if(mv==='チャージ'&&dir==='in')add('cash','現金');
+    if(mv==='チャージ'&&dir==='out')add(other[0],other[1]);
+    sel.value=cur&&[].some.call(sel.options,function(op){return op.value===cur})?cur:sel.options[0].value;
     renderBankLink();
   }
   var linkDir=null;
   function renderBankLink(){
     var dir=bankDir(), m=document.querySelector('input[name=bmethod]:checked'), to=$('bToWrap').hidden?'':$('bTo').value;
-    var on=!!(m&&m.value!=='ATM'&&!to&&!hasSampleAcc());
+    var on=!!(m&&m.value!=='ATM'&&m.value!=='チャージ'&&!to&&!hasSampleAcc());
     $('bLinkWrap').hidden=!on;if(!on)return;
     $('bLinkLbl').textContent=dir==='in'?'記録画面の収入にも入れる':'記録画面の支出にも入れる';
     $('bLinkHint').hidden=dir==='in';
@@ -1028,13 +1122,13 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     $('bankSampleBar').hidden=!hasSampleAcc();
     var total=0;accs.forEach(function(a){total+=B.bal[a.id]});
     $('bankTotal').textContent=sgnYen(total);
-    $('bankCnt').textContent=has?accs.length+'口座':'';
+    $('bankCnt').textContent=has?accs.length+'件':'';
     var list=$('accList');list.textContent='';
-    if(!has){var em=document.createElement('p');em.className='empty2';em.textContent='まだ口座がありません。下の「口座を追加」で、口座の名前といまの残高を登録してください。';list.appendChild(em)}
+    if(!has){var em=document.createElement('p');em.className='empty2';em.textContent='まだ登録がありません。下の「口座・電子マネーを追加」で、名前といまの残高を登録してください。';list.appendChild(em)}
     accs.forEach(function(a){
       var b=document.createElement('button');b.type='button';b.className='acc';b.setAttribute('aria-pressed',selAcc===a.id?'true':'false');
       b.innerHTML='<span class="an"></span><span class="ab"></span>';
-      b.children[0].textContent=a.name;b.children[1].textContent=sgnYen(B.bal[a.id]);
+      b.children[0].textContent=a.name;if(isEm(a)){var kd=document.createElement('span');kd.className='kd';kd.textContent='電子マネー';b.children[0].appendChild(kd)}b.children[1].textContent=sgnYen(B.bal[a.id]);
       b.setAttribute('aria-label',a.name+' 残高'+sgnNum(B.bal[a.id])+'円');
       b.addEventListener('click',function(){
         selAcc=selAcc===a.id?null:a.id;armedBank=null;
@@ -1051,14 +1145,14 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     function partner(x){if(!x.pair)return null;var l=pairs[x.pair]||[];for(var i=0;i<l.length;i++)if(l[i].id!==x.id)return l[i];return null}
     var rows=$('bankRows');rows.textContent='';
     var tx=bankSorted().filter(function(x){return accById(x.acc)&&(!selAcc||x.acc===selAcc)}).reverse();
-    $('bankBookTitle').textContent=selAcc?accById(selAcc).name+' の入出金':'すべての口座の入出金';
+    $('bankBookTitle').textContent=selAcc?accById(selAcc).name+' の入出金':'すべての入出金';
     if(!tx.length){var e2=document.createElement('div');e2.className='empty';e2.textContent='まだ記録がありません。上のフォームから入金・出金を記録しましょう。';rows.appendChild(e2)}
     tx.forEach(function(x){
       var b=document.createElement('button');b.type='button';b.className='brow'+(armedBank===x.id?' armed':'');
       b.innerHTML='<span class="d"></span><span class="t"></span><span class="a"></span><span class="b"></span>';
       var d=parse(x.date);b.children[0].textContent=(d.getMonth()+1)+'/'+d.getDate();
       var t=b.children[1];t.textContent=x.method;
-      var pt=partner(x), sub=pt&&accById(pt.acc)?(x.dir==='out'?'→ ':'← ')+accById(pt.acc).name:x.memo;
+      var pt=partner(x), sub=pt&&accById(pt.acc)?(x.dir==='out'?'→ ':'← ')+accById(pt.acc).name:(x.src==='cash'?'← 現金'+(x.memo?' '+x.memo:''):x.memo);
       if(sub){var sm=document.createElement('small');sm.textContent=sub;t.appendChild(sm)}
       if(!selAcc){var pm=document.createElement('span');pm.className='pm';pm.textContent=accById(x.acc).name;t.appendChild(pm)}
       b.children[2].textContent=(x.dir==='in'?'+':'−')+yen(x.amount);b.children[2].classList.add(x.dir);
@@ -1070,7 +1164,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
         state.bank=state.bank.filter(function(y){return y.id!==x.id&&!(x.pair&&y.pair===x.pair)});
         var hadE=x.entry&&state.entries.some(function(y){return y.id===x.entry});
         if(hadE)state.entries=state.entries.filter(function(y){return y.id!==x.entry});
-        save();render();toast(x.pair?'口座間の移動を取り消しました':(hadE?'取り消しました（記録画面の分も取り消し）':'取り消しました'));
+        save();render();toast(x.pair&&x.method!=='チャージ'?'口座間の移動を取り消しました':(hadE?'取り消しました（記録画面の分も取り消し）':'取り消しました'));
       });
       rows.appendChild(b);
     });
@@ -1104,6 +1198,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     });
   }
   document.querySelectorAll('input[name=bdir]').forEach(function(r){r.addEventListener('change',renderBankForm)});
+  $('accKind').addEventListener('change',function(){$('accName').placeholder=this.value==='emoney'?'例：PayPay':'例：ゆうちょ'});
   ['bAmount','accStart'].forEach(function(id){$(id).addEventListener('input',function(){var v=this.value.replace(/[^0-9]/g,'');this.value=v?Number(v).toLocaleString('ja-JP'):''})});
   $('bDate').value=ymd(today0());
   $('bankForm').addEventListener('submit',function(ev){
@@ -1117,7 +1212,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     state.bseq=(state.bseq||0)+1;
     var x={id:'b'+Date.now()+'_'+state.bseq,n:state.bseq,date:date,acc:a.value,dir:dir,method:m.value,amount:amt,memo:$('bMemo').value.trim()};
     state.bank.push(x);
-    if(to){var pid='bp'+Date.now();x.pair=pid;state.bseq++;state.bank.push({id:x.id+'p',n:state.bseq,date:date,acc:to,dir:dir==='out'?'in':'out',method:m.value,amount:amt,memo:x.memo,pair:pid})}
+    if(to==='cash'){x.src='cash';to=''}
+    else if(to){var pid='bp'+Date.now();x.pair=pid;state.bseq++;state.bank.push({id:x.id+'p',n:state.bseq,date:date,acc:to,dir:dir==='out'?'in':'out',method:m.value,amount:amt,memo:x.memo,pair:pid})}
     var ent=null;
     if(!to&&!$('bLinkWrap').hidden){
       state.bLink[dir]=$('bLink').checked;
@@ -1132,16 +1228,17 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     }
     state.lastAcc=a.value;save();armedBank=null;
     $('bAmount').value='';$('bMemo').value='';$('bDate').value=ymd(today0());
-    dropKeyboard();settle('viewBank','bankForm',render);toast(to?'口座間の移動を記録しました':(dir==='in'?'入金':'出金')+'を記録しました'+(ent?'（記録画面にも反映）':''));
+    dropKeyboard();settle('viewBank','bankForm',render);toast(m.value==='チャージ'?'チャージを記録しました'+(x.src==='cash'?'（財布の現金から）':''):(to?'口座間の移動を記録しました':(dir==='in'?'入金':'出金')+'を記録しました'+(ent?'（記録画面にも反映）':'')));
   });
   $('accForm').addEventListener('submit',function(ev){
     ev.preventDefault();
     var name=$('accName').value.trim();
-    if(!name){toast('口座の名前を入力してください');$('accName').focus();return}
+    if(!name){toast('名前を入力してください');$('accName').focus();return}
     var wasSample=hasSampleAcc();if(wasSample)dropSampleAcc();
-    if(state.accounts.some(function(a){return a.name===name})){toast('同じ名前の口座があります');$('accName').focus();return}
+    if(state.accounts.some(function(a){return a.name===name})){toast('同じ名前のものがあります');$('accName').focus();return}
     var hadAcc=state.accounts.length>0;
-    state.accounts.push({id:'a'+Date.now(),name:name,start:digits($('accStart').value)});
+    var kind=$('accKind').value==='emoney'?'emoney':'bank';
+    state.accounts.push({id:'a'+Date.now(),name:name,kind:kind,start:digits($('accStart').value)});
     save();$('accName').value='';$('accStart').value='';
     dropKeyboard();
     if(hadAcc)settle('viewBank','accForm',render);else{render();$('viewBank').scrollTop=0}
@@ -1231,7 +1328,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     realAcc.forEach(function(a){
       var ex=accById(String(a.id))||state.accounts.filter(function(x){return x.name===a.name})[0];
       if(ex){idMap[a.id]=ex.id;return}
-      state.accounts.push({id:String(a.id),name:String(a.name),start:Math.round(Number(a.start)||0)});idMap[a.id]=String(a.id);accAdded++;
+      state.accounts.push({id:String(a.id),name:String(a.name),kind:a.kind==='emoney'?'emoney':'bank',start:Math.round(Number(a.start)||0)});idMap[a.id]=String(a.id);accAdded++;
     });
     var bids={},maxB=state.bseq||0;state.bank.forEach(function(x){bids[x.id]=1;if(x.n>maxB)maxB=x.n});
     (d.bank||[]).forEach(function(x){
@@ -1240,9 +1337,12 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       var y={id:String(x.id),n:Number(x.n)||0,date:x.date,acc:idMap[x.acc],dir:x.dir,method:String(x.method||'振込'),amount:Math.round(x.amount),memo:String(x.memo||'')};
       if(x.pair)y.pair=String(x.pair);
       if(x.entry)y.entry=String(x.entry);
+      if(x.src==='cash')y.src='cash';
       state.bank.push(y);bids[y.id]=1;bkAdded++;if(y.n>maxB)maxB=y.n;
     });
     state.bseq=maxB;
+    if(!state.budgets.length&&Array.isArray(d.budgets))d.budgets.forEach(function(b){if(b&&b.id&&b.name&&Array.isArray(b.cats)&&b.amount>0)state.budgets.push({id:String(b.id),name:String(b.name),cats:b.cats.map(String),amount:Math.round(b.amount)})});
+    if(!state.cashSetAt&&d.cashSetAt){state.cashAdj=Number(d.cashAdj)||0;state.cashSetAt=String(d.cashSetAt)}
     if(wasEmpty&&d.payday>=1&&d.payday<=31){state.payday=d.payday;$('payday').value=d.payday}
     if(!state.lastPay&&d.lastPay)state.lastPay=d.lastPay;
     save();renderCats();renderCustomList();renderPayList();render();
@@ -1263,6 +1363,94 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(importText(t)){$('bkText').value='';$('bkPasteBox').hidden=true}
   });
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+
+  function openCash(){var e=$('cashEdit');e.hidden=false;$('cashBtn').hidden=true;var c=cashNow();$('cashInput').value=c>0?yen(c):'';$('cashInput').focus()}
+  function closeCash(){$('cashEdit').hidden=true;$('cashBtn').hidden=false}
+  $('cashBtn').addEventListener('click',openCash);
+  $('cashCancel').addEventListener('click',function(){closeCash();dropKeyboard()});
+  $('cashInput').addEventListener('input',function(){var v=this.value.replace(/[^0-9]/g,'');this.value=v?Number(v).toLocaleString('ja-JP'):''});
+  function saveCash(){
+    var v=digits($('cashInput').value);
+    if(state.sample)clearSample();
+    state.cashAdj=v-cashFlows(state.entries,state.bank);state.cashSetAt=ymd(today0());
+    save();closeCash();dropKeyboard();settle('viewHome','entryForm',render);toast('財布の現金を ¥'+yen(v)+' に合わせました');
+  }
+  $('cashSave').addEventListener('click',saveCash);
+  $('cashInput').addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();saveCash()}});
+
+  var budOpen=false, editingBud=null, armedBud=null;
+  function budMatch(b,cat){return b.cats.indexOf('*')>=0||b.cats.indexOf(cat)>=0}
+  function renderBudgets(){
+    var list=$('budList');if(!list)return;
+    var tStr=ymd(today0());list.textContent='';
+    var spent={};state.budgets.forEach(function(b){spent[b.id]=0});
+    state.entries.forEach(function(e){if(e.type!=='out'||e.date!==tStr)return;state.budgets.forEach(function(b){if(budMatch(b,e.cat))spent[b.id]+=money(e)})});
+    if(!state.budgets.length){var em=document.createElement('div');em.className='empty';em.textContent='食費などの1日の予算を決めると、今日あといくら使えるかがここに出ます。「追加」から決めてください。';list.appendChild(em)}
+    state.budgets.forEach(function(b){
+      var sp=spent[b.id], left=b.amount-sp, over=left<0;
+      var r=document.createElement('div');r.className='bud'+(over?' over':'');
+      r.innerHTML='<div class="top"><span class="nm"></span><span class="left"><small></small><span></span></span></div><div class="track"><div class="fill"></div></div><div class="meta"></div>';
+      r.querySelector('.nm').textContent=b.name;
+      r.querySelector('.left small').textContent=over?'オーバー':'あと';
+      r.querySelector('.left span').textContent='¥'+yen(Math.abs(left));
+      r.querySelector('.fill').style.width=Math.min(100,b.amount?sp/b.amount*100:100)+'%';
+      r.querySelector('.meta').textContent='今日 ¥'+yen(sp)+' ／ 予算 ¥'+yen(b.amount)+(b.cats[0]==='*'?'':'（'+b.cats.join('・')+'）');
+      list.appendChild(r);
+    });
+    $('budEditBtn').textContent=budOpen?'閉じる':(state.budgets.length?'編集':'追加');
+    $('budEditor').hidden=!budOpen;
+    if(budOpen)renderBudManage();
+  }
+  function renderBudManage(){
+    var box=$('budManage');box.textContent='';
+    state.budgets.forEach(function(b){
+      var row=document.createElement('div');row.className='ci';
+      row.innerHTML='<span class="n"></span><span class="amt"></span><button type="button">変更</button><button type="button"></button>';
+      row.children[0].textContent=b.name;row.children[1].textContent='¥'+yen(b.amount)+'/日';
+      row.children[2].setAttribute('aria-label',b.name+'の予算を変更');
+      row.children[2].addEventListener('click',function(){loadBud(b)});
+      var del=row.children[3];
+      if(armedBud===b.id){del.className='armed';del.textContent='本当に削除'}else del.textContent='削除';
+      del.setAttribute('aria-label',b.name+'の予算を削除');
+      del.addEventListener('click',function(){
+        if(armedBud!==b.id){armedBud=b.id;renderBudManage();return}
+        armedBud=null;state.budgets=state.budgets.filter(function(x){return x.id!==b.id});
+        if(editingBud===b.id)resetBudForm();
+        save();renderBudgets();toast('「'+b.name+'」の予算を削除しました');
+      });
+      box.appendChild(row);
+    });
+  }
+  function buildBudCats(sel){
+    var box=$('budCats');box.textContent='';
+    ['*'].concat(catsFor('out')).forEach(function(c,i){
+      var inp=document.createElement('input');inp.type='checkbox';inp.name='budcat';inp.id='bc'+i;inp.value=c;inp.checked=sel.indexOf(c)>=0;
+      var lab=document.createElement('label');lab.htmlFor='bc'+i;lab.textContent=c==='*'?'すべての支出':c;
+      box.appendChild(inp);box.appendChild(lab);
+    });
+  }
+  function resetBudForm(){editingBud=null;buildBudCats([]);$('budAmt').value='';$('budName').value='';$('budSubmit').textContent='予算を追加';$('budCancel').hidden=true}
+  function loadBud(b){
+    editingBud=b.id;buildBudCats(b.cats);$('budAmt').value=yen(b.amount);$('budName').value=b.name;
+    $('budSubmit').textContent='変更を保存';$('budCancel').hidden=false;
+    try{$('budForm').scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}
+  }
+  $('budEditBtn').addEventListener('click',function(){budOpen=!budOpen;armedBud=null;if(budOpen)resetBudForm();renderBudgets()});
+  $('budCancel').addEventListener('click',function(){resetBudForm();dropKeyboard()});
+  $('budAmt').addEventListener('input',function(){var v=this.value.replace(/[^0-9]/g,'');this.value=v?Number(v).toLocaleString('ja-JP'):''});
+  $('budForm').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var cats=[].map.call(document.querySelectorAll('input[name=budcat]:checked'),function(i){return i.value});
+    if(cats.indexOf('*')>=0)cats=['*'];
+    if(!cats.length){toast('対象の項目を選んでください');return}
+    var amt=digits($('budAmt').value);
+    if(!amt){toast('1日の予算を入力してください');$('budAmt').focus();return}
+    var name=$('budName').value.trim()||(cats[0]==='*'?'すべての支出':cats.join('・'));
+    var msg;
+    if(editingBud){state.budgets.forEach(function(b){if(b.id===editingBud){b.name=name;b.cats=cats;b.amount=amt}});msg='「'+name+'」の予算を変更しました'}
+    else{state.budgets.push({id:'g'+Date.now(),name:name,cats:cats,amount:amt});msg='「'+name+'」の予算を追加しました'}
+    save();resetBudForm();dropKeyboard();settle('viewHome','budgetCard',renderBudgets);toast(msg);
+  });
 
   function clearSample(){state.entries=state.entries.filter(function(e){return !e.sample});state.sample=false}
 
@@ -1296,7 +1484,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   $('wipe').addEventListener('click',function(){
     if(!wipeArmed){wipeArmed=true;this.classList.add('armed');this.textContent='本当に消す（もう一度押す）';var btn=this;wipeTimer=setTimeout(function(){wipeArmed=false;btn.classList.remove('armed');btn.textContent='すべての記録を消す'},4000);return}
     clearTimeout(wipeTimer);wipeArmed=false;this.classList.remove('armed');this.textContent='すべての記録を消す';
-    state.entries=[];state.sample=false;state.accounts=[];state.bank=[];selAcc=null;save();render();toast('すべて消しました');
+    state.entries=[];state.sample=false;state.accounts=[];state.bank=[];state.cashAdj=0;delete state.cashSetAt;selAcc=null;save();render();toast('すべて消しました');
   });
 
   document.addEventListener('visibilitychange',function(){if(!document.hidden){render();renderMonth()}});
