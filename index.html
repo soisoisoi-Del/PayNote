@@ -246,6 +246,17 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
 .sheet button.del.armed{background:var(--warn);color:var(--sheet)}
 .sheet button.cancel{background:none;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.brow{transition:none}}
+.secs{display:contents}
+.reorderlink{align-self:center;margin-top:4px}
+.reorderbar{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--sheet);border-radius:12px;padding:10px 12px;font-size:13px;position:sticky;top:0;z-index:4}
+.reorderbar span{flex:1;min-width:0}
+.reorderbar button{border:0;border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px;background:var(--sheet);color:var(--ink);white-space:nowrap}
+.reorderbar button.g{background:none;color:inherit;border:1px solid color-mix(in srgb,var(--sheet) 40%,transparent)}
+.view.reordering .secs>*{position:relative;height:68px;min-height:0;overflow:hidden}
+.rov{position:absolute;inset:0;border:2px dashed var(--accent);border-radius:inherit;background:color-mix(in srgb,var(--paper) 92%,transparent);display:flex;align-items:center;gap:8px;padding:0 10px;z-index:3}
+.rov .rn{margin-right:auto;font-weight:700;font-size:14px;color:var(--ink);background:var(--sheet);border-radius:8px;padding:4px 10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rov button{width:44px;height:44px;flex:none;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);font-size:18px;line-height:1}
+.rov button:disabled{opacity:.3}
 .danger{border:1px solid var(--warn);color:var(--warn);background:none;border-radius:10px;padding:10px;font-weight:700}
 .danger.armed{background:var(--warn);color:var(--sheet)}
 
@@ -309,7 +320,9 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </div>
   </div>
 
-  <section class="hero" id="hero" aria-live="polite">
+  <div class="reorderbar" id="rbar_viewHome" hidden><span>矢印で欄の順番を入れ替えられます</span><button type="button" class="g" data-reset="viewHome">元に戻す</button><button type="button" data-done="viewHome">完了</button></div>
+  <div class="secs" id="secs_viewHome">
+  <section data-sec="hero" class="hero" id="hero" aria-live="polite">
     <div class="lead"><span id="heroLead">財布の現金</span><button type="button" class="cbtn" id="cashBtn">数え直す</button></div>
     <div class="big"><small>¥</small><span id="heroBig">0</span></div>
     <div class="cashedit" id="cashEdit" hidden>
@@ -326,7 +339,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </div>
   </section>
 
-  <section class="card">
+  <section data-sec="form" class="card">
     <form id="entryForm" autocomplete="off" novalidate>
       <div class="editbar" id="eEditBar" hidden><span>記録を編集しています</span><button type="button" id="eEditCancel">やめる</button></div>
       <div class="seg" role="radiogroup" aria-label="種類">
@@ -352,16 +365,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </form>
   </section>
 
-  <section class="card">
-    <h2>通帳（この期間）</h2>
-    <div class="book">
-      <div class="bhead"><span>日付</span><span>摘要</span><span>金額</span><span>差引残高</span></div>
-      <div id="rows"></div>
-    </div>
-    <p class="hint">行を長押しすると、編集・削除できます</p>
-  </section>
-
-  <section class="card" id="budgetCard">
+  <section data-sec="budget" class="card" id="budgetCard">
     <div class="bhd"><h2>予算</h2><button type="button" class="linkbtn" id="budEditBtn">編集</button></div>
     <div class="budlist" id="budList"></div>
     <div id="budEditor" hidden>
@@ -381,17 +385,26 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </div>
   </section>
 
-  <section class="card">
+  <section data-sec="book" class="card">
+    <h2>通帳（この期間）</h2>
+    <div class="book">
+      <div class="bhead"><span>日付</span><span>摘要</span><span>金額</span><span>差引残高</span></div>
+      <div id="rows"></div>
+    </div>
+    <p class="hint">行を長押しすると、編集・削除できます</p>
+  </section>
+
+  <section data-sec="cats" class="card">
     <h2>何に使った？</h2>
     <div class="bars" id="bars"></div>
   </section>
 
-  <section class="card">
+  <section data-sec="pays" class="card">
     <h2>どうやって払った？</h2>
     <div class="bars" id="payBars"></div>
   </section>
 
-  <section class="card">
+  <section data-sec="settings" class="card">
     <details id="setDetails">
       <summary>設定</summary>
       <div class="settings">
@@ -430,6 +443,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
       </div>
     </details>
   </section>
+  </div>
+  <button type="button" class="linkbtn reorderlink" id="rlink_viewHome" data-start="viewHome">この画面の欄を並べ替える</button>
 </div>
 
 <div class="view" id="viewMonth">
@@ -439,7 +454,9 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     <button type="button" id="mNext" aria-label="次の月">›</button>
   </div>
 
-  <section class="card">
+  <div class="reorderbar" id="rbar_viewMonth" hidden><span>矢印で欄の順番を入れ替えられます</span><button type="button" class="g" data-reset="viewMonth">元に戻す</button><button type="button" data-done="viewMonth">完了</button></div>
+  <div class="secs" id="secs_viewMonth">
+  <section data-sec="msum" class="card">
     <div class="msum">
       <div><span>収入</span><span id="mInc">¥0</span></div>
       <div><span>支出</span><span id="mOut">¥0</span></div>
@@ -448,26 +465,28 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     <p class="mnote" id="mNote"></p>
   </section>
 
-  <section class="card">
+  <section data-sec="trend" class="card">
     <h2>6か月の推移</h2>
     <div class="trend" id="trend"></div>
     <div class="legend"><span><i class="in"></i>収入</span><span><i class="out"></i>支出</span><span>棒をタップでその月へ</span></div>
   </section>
 
-  <section class="card">
+  <section data-sec="minc" class="card">
     <h2>収入の内訳</h2>
     <div class="bars" id="mInCat"></div>
   </section>
 
-  <section class="card">
+  <section data-sec="mcat" class="card">
     <h2>支出の内訳</h2>
     <div class="bars" id="mCat"></div>
   </section>
 
-  <section class="card">
+  <section data-sec="mpay" class="card">
     <h2>支払い方法別</h2>
     <div class="bars" id="mPay"></div>
   </section>
+  </div>
+  <button type="button" class="linkbtn reorderlink" id="rlink_viewMonth" data-start="viewMonth">この画面の欄を並べ替える</button>
 </div>
 
 <div class="view" id="viewBank">
@@ -476,14 +495,16 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     <button type="button" id="bankClearSample">消して始める</button>
   </div>
 
-  <section class="banktop">
+  <div class="reorderbar" id="rbar_viewBank" hidden><span>矢印で欄の順番を入れ替えられます</span><button type="button" class="g" data-reset="viewBank">元に戻す</button><button type="button" data-done="viewBank">完了</button></div>
+  <div class="secs" id="secs_viewBank">
+  <section data-sec="banktop" class="banktop">
     <div class="lead"><span>口座・電子マネーの合計</span><span id="bankCnt"></span></div>
     <div class="total" id="bankTotal">¥0</div>
     <div class="accs" id="accList"></div>
     <p class="hint2" id="accHint" hidden>口座をタップすると、その口座の記録だけを表示します</p>
   </section>
 
-  <section class="card" id="bankFormCard">
+  <section data-sec="bform" class="card" id="bankFormCard">
     <form id="bankForm" autocomplete="off" novalidate>
       <div class="editbar" id="bEditBar" hidden><span>入出金を編集しています</span><button type="button" id="bEditCancel">やめる</button></div>
       <div class="seg" role="radiogroup" aria-label="出金か入金か">
@@ -507,7 +528,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </form>
   </section>
 
-  <section class="card" id="bankBookCard">
+  <section data-sec="bbook" class="card" id="bankBookCard">
     <h2 id="bankBookTitle">すべての入出金</h2>
     <div class="book">
       <div class="bhead"><span>日付</span><span>摘要</span><span>金額</span><span>口座残高</span></div>
@@ -516,7 +537,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     <p class="hint">行を長押しすると、編集・削除できます</p>
   </section>
 
-  <section class="card" id="accAddCard">
+  <section data-sec="badd" class="card" id="accAddCard">
     <h2>口座・電子マネーを追加</h2>
     <form id="accForm" class="accform" autocomplete="off" novalidate>
       <label class="field" for="accKind"><span>種類</span><select id="accKind"><option value="bank">銀行口座</option><option value="emoney">電子マネー（PayPayなど）</option></select></label>
@@ -528,6 +549,8 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     </form>
     <div class="clist" id="accManage"></div>
   </section>
+  </div>
+  <button type="button" class="linkbtn reorderlink" id="rlink_viewBank" data-start="viewBank">この画面の欄を並べ替える</button>
 </div>
 </div>
 
@@ -640,7 +663,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
   if(!state||!Array.isArray(state.entries))state=sampleData();
   else if(state.sample&&state.entries.some(function(e){return !e.sample})){state.entries=state.entries.filter(function(e){return !e.sample});state.sample=false;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat','bkSnooze','budgets','cashAdj','cashSetAt'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
+  else if(state.sample){var old=state;state=sampleData();['payday','lastPay','custom','paydays','payDone','lastBackup','lastAcc','incAcc','payAcc','bLink','bLinkCat','bkSnooze','budgets','cashAdj','cashSetAt','layout'].forEach(function(k){if(old[k]!==undefined)state[k]=old[k]});var ra=(old.accounts||[]).filter(function(a){return !a.sample});if(ra.length){state.accounts=ra;state.bank=(old.bank||[]).filter(function(x){return !x.sample});state.bseq=old.bseq||0}}
   if(!state.custom)state.custom={out:[],in:[]};
   if(!state.paydays)state.paydays=[];
   if(!state.payDone)state.payDone={};
@@ -1033,6 +1056,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
   function pageOf(v){var i=NAMES.indexOf(v);return i<0?0:i}
   function markTab(i){
     if(i===curPage&&$(TABS[i]).hasAttribute('aria-current'))return;
+    if(reorderView&&VIEWS[i]!==reorderView)endReorder();
     curPage=i;
     TABS.forEach(function(t,j){if(j===i)$(t).setAttribute('aria-current','page');else $(t).removeAttribute('aria-current')});
     try{history.replaceState(null,'','#'+NAMES[i])}catch(e){}
@@ -1369,6 +1393,7 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     });
     state.bseq=maxB;
     if(!state.budgets.length&&Array.isArray(d.budgets))d.budgets.forEach(function(b){if(b&&b.id&&b.name&&Array.isArray(b.cats)&&b.amount>0)state.budgets.push({id:String(b.id),name:String(b.name),cats:b.cats.map(String),amount:Math.round(b.amount),period:b.period==='month'?'month':'day'})});
+    if(!state.layout&&d.layout&&typeof d.layout==='object'){state.layout=d.layout;applyLayout()}
     if(!state.cashSetAt&&d.cashSetAt){state.cashAdj=Number(d.cashAdj)||0;state.cashSetAt=String(d.cashSetAt)}
     if(wasEmpty&&d.payday>=1&&d.payday<=31){state.payday=d.payday;$('payday').value=d.payday}
     if(!state.lastPay&&d.lastPay)state.lastPay=d.lastPay;
@@ -1612,6 +1637,51 @@ details summary::after{content:" ＋"} details[open] summary::after{content:" �
     if(!keep){$('bAmount').value='';$('bMemo').value='';$('bDate').value=ymd(today0())}
   }
   $('bEditCancel').addEventListener('click',function(){endBankEdit();dropKeyboard();render()});
+
+  var SECNAMES={hero:'財布の現金',form:'記録の入力',budget:'予算',book:'通帳',cats:'何に使った？',pays:'どうやって払った？',settings:'設定',msum:'収入・支出・収支',trend:'6か月の推移',minc:'収入の内訳',mcat:'支出の内訳',mpay:'支払い方法別',banktop:'合計と口座の一覧',bform:'入出金の入力',bbook:'入出金の記録',badd:'口座・電子マネーを追加'};
+  var SECDEF={viewHome:['hero','form','budget','book','cats','pays','settings'],viewMonth:['msum','trend','minc','mcat','mpay'],viewBank:['banktop','bform','bbook','badd']};
+  function orderSecs(v,want){
+    var box=$('secs_'+v);if(!box)return;var els={};
+    [].forEach.call(box.children,function(c){els[c.getAttribute('data-sec')]=c});
+    var order=(want||[]).filter(function(k){return els[k]});
+    SECDEF[v].forEach(function(k){if(els[k]&&order.indexOf(k)<0)order.push(k)});
+    order.forEach(function(k){box.appendChild(els[k])});
+  }
+  function applyLayout(){var L=state.layout||{};Object.keys(SECDEF).forEach(function(v){orderSecs(v,L[v])})}
+  var reorderView=null;
+  function drawOverlays(v){
+    var box=$('secs_'+v);
+    [].forEach.call(box.querySelectorAll(':scope > * > .rov'),function(o){o.remove()});
+    var vis=[].filter.call(box.children,function(c){return !c.hidden});
+    vis.forEach(function(c,i){
+      var o=document.createElement('div');o.className='rov';
+      o.innerHTML='<span class="rn"></span><button type="button">↑</button><button type="button">↓</button>';
+      var nm=SECNAMES[c.getAttribute('data-sec')]||'';o.children[0].textContent=nm;
+      var up=o.children[1],dn=o.children[2];
+      up.setAttribute('aria-label',nm+'を上へ');dn.setAttribute('aria-label',nm+'を下へ');
+      up.disabled=i===0;dn.disabled=i===vis.length-1;
+      up.addEventListener('click',function(){box.insertBefore(c,vis[i-1]);saveLayout(v);drawOverlays(v);focusMove(c,0)});
+      dn.addEventListener('click',function(){box.insertBefore(vis[i+1],c);saveLayout(v);drawOverlays(v);focusMove(c,1)});
+      c.appendChild(o);
+    });
+  }
+  function focusMove(c,which){try{c.scrollIntoView({block:'nearest',behavior:'smooth'});var b=c.querySelector('.rov').children[1+which];(b.disabled?c.querySelector('.rov').children[2-which]:b).focus({preventScroll:true})}catch(e){}}
+  function saveLayout(v){if(!state.layout)state.layout={};state.layout[v]=[].map.call($('secs_'+v).children,function(c){return c.getAttribute('data-sec')});save()}
+  function startReorder(v){
+    if(reorderView)endReorder();
+    var ae=document.activeElement;if(isField(ae))ae.blur();
+    reorderView=v;$(v).classList.add('reordering');$('rbar_'+v).hidden=false;$('rlink_'+v).hidden=true;
+    drawOverlays(v);$(v).scrollTop=0;
+  }
+  function endReorder(){
+    var v=reorderView;if(!v)return;reorderView=null;
+    $(v).classList.remove('reordering');$('rbar_'+v).hidden=true;$('rlink_'+v).hidden=false;
+    [].forEach.call($('secs_'+v).querySelectorAll('.rov'),function(o){o.remove()});
+  }
+  [].forEach.call(document.querySelectorAll('[data-start]'),function(b){b.addEventListener('click',function(){startReorder(b.getAttribute('data-start'))})});
+  [].forEach.call(document.querySelectorAll('[data-done]'),function(b){b.addEventListener('click',function(){var v=reorderView;endReorder();toast('並べ替えを保存しました');if(v)$(v).scrollTop=0})});
+  [].forEach.call(document.querySelectorAll('[data-reset]'),function(b){b.addEventListener('click',function(){var v=b.getAttribute('data-reset');if(state.layout)delete state.layout[v];save();orderSecs(v,null);drawOverlays(v);toast('元の順番に戻しました')})});
+  applyLayout();
 
   function clearSample(){state.entries=state.entries.filter(function(e){return !e.sample});state.sample=false}
 
